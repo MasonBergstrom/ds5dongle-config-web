@@ -4,11 +4,27 @@ import {
   decodeConfigBody,
   encodeConfigBody,
 } from "./config";
+import {
+  ButtonProtocolError,
+  ShortcutSlot,
+  buttonRemapsEqual,
+  decodeButtonRemap,
+  decodeShortcutSlots,
+  encodeButtonRemap,
+  encodeShortcutSlots,
+  REPORT_BUTTON_REMAP,
+  REPORT_BUTTON_SHORTCUT,
+  shortcutSlotsEqual,
+} from "./buttons";
 
 export const SONY_VENDOR_ID = 0x054c;
-export const SUPPORTED_PRODUCT_IDS = [0x0ce6, 0x0df2] as const;
+export const DUALSENSE_PRODUCT_ID = 0x0ce6;
+export const DUALSENSE_EDGE_PRODUCT_ID = 0x0df2;
+export const SUPPORTED_PRODUCT_IDS = [DUALSENSE_PRODUCT_ID, DUALSENSE_EDGE_PRODUCT_ID] as const;
 export const NO_DEVICE_SELECTED_ERROR = "noDeviceSelected";
 export const WEBHID_UNAVAILABLE_ERROR = "webHidUnavailable";
+
+export type ControllerModel = "dualsense" | "dualsense-edge";
 
 const GENERIC_DESKTOP_USAGE_PAGE = 0x01;
 const GAMEPAD_USAGE = 0x05;
@@ -19,6 +35,7 @@ const REPORT_GET_SIGNAL_STRENGTH = 0xf9;
 const CMD_UPDATE_CONFIG = 0x01;
 const CMD_SAVE_TO_FLASH = 0x02;
 const CMD_RECONNECT_USB = 0x03;
+const HID_SET_REPORT_DELAY_MS = 50;
 
 export interface AudioActivityState {
   speakerActive: boolean;
@@ -95,17 +112,58 @@ export class Ds5BridgeHidClient {
     return decodeSignalStrength(report);
   }
 
-  async applyConfig(config: ConfigBody): Promise<void> {
+  async readButtonRemap(): Promise<number[]> {
+    await this.open();
+    return decodeButtonRemap(await this.device.receiveFeatureReport(REPORT_BUTTON_REMAP));
+  }
+
+  async readShortcuts(): Promise<ShortcutSlot[]> {
+    await this.open();
+    return decodeShortcutSlots(await this.device.receiveFeatureReport(REPORT_BUTTON_SHORTCUT));
+  }
+
+  async applyConfig(config: ConfigBody): Promise<ConfigBody> {
     await this.open();
     const body = encodeConfigBody(config);
     const report = commandReport(CMD_UPDATE_CONFIG);
     report.set(body, 1);
     await this.device.sendFeatureReport(REPORT_SET_CONFIG, report);
+    await settleFeatureReport();
+    return this.readConfig();
+  }
+
+  async applyButtonRemap(remap: readonly number[]): Promise<number[]> {
+    await this.open();
+    await this.device.sendFeatureReport(REPORT_BUTTON_REMAP, encodeButtonRemap(remap));
+    await settleFeatureReport();
+
+    const applied = await this.readButtonRemap();
+    if (!buttonRemapsEqual(applied, remap)) {
+      throw new ButtonProtocolError("remapVerificationFailed", {});
+    }
+
+    await this.saveToFlash();
+    return this.readButtonRemap();
+  }
+
+  async applyShortcuts(shortcuts: readonly ShortcutSlot[]): Promise<ShortcutSlot[]> {
+    await this.open();
+    await this.device.sendFeatureReport(REPORT_BUTTON_SHORTCUT, encodeShortcutSlots(shortcuts));
+    await settleFeatureReport();
+
+    const applied = await this.readShortcuts();
+    if (!shortcutSlotsEqual(applied, shortcuts)) {
+      throw new ButtonProtocolError("shortcutVerificationFailed", {});
+    }
+
+    await this.saveToFlash();
+    return this.readShortcuts();
   }
 
   async saveToFlash(): Promise<void> {
     await this.open();
     await this.device.sendFeatureReport(REPORT_SET_CONFIG, commandReport(CMD_SAVE_TO_FLASH));
+    await settleFeatureReport();
   }
 
   async reconnectUsb(): Promise<void> {
@@ -127,6 +185,14 @@ export function getDeviceLabel(device: HIDDevice | null): string {
   return `${device.productName || "DS5 Bridge"} · 054C:${productId}`;
 }
 
+export function getControllerModel(device: HIDDevice | null): ControllerModel | null {
+  if (!device) {
+    return null;
+  }
+
+  return device.productId === DUALSENSE_EDGE_PRODUCT_ID ? "dualsense-edge" : "dualsense";
+}
+
 function getHid(): HID {
   if (!navigator.hid) {
     throw new Error(WEBHID_UNAVAILABLE_ERROR);
@@ -143,6 +209,10 @@ function commandReport(command: number): Uint8Array<ArrayBuffer> {
   const report = new Uint8Array(new ArrayBuffer(FEATURE_REPORT_PAYLOAD_SIZE));
   report[0] = command;
   return report;
+}
+
+function settleFeatureReport(): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, HID_SET_REPORT_DELAY_MS));
 }
 
 function decodeFirmwareVersion(source: ArrayBuffer | DataView | Uint8Array): string {
