@@ -134,7 +134,11 @@ export class Ds5BridgeHidClient {
 
   async applyButtonRemap(remap: readonly number[]): Promise<number[]> {
     await this.open();
-    await this.device.sendFeatureReport(REPORT_BUTTON_REMAP, encodeButtonRemap(remap));
+    // The HID descriptor declares report 0xFA as a 63-byte feature report.
+    // Pad the 28-byte remap table because some host HID stacks reject short writes.
+    const report = new Uint8Array(new ArrayBuffer(FEATURE_REPORT_PAYLOAD_SIZE));
+    report.set(encodeButtonRemap(remap));
+    await this.device.sendFeatureReport(REPORT_BUTTON_REMAP, report);
     await settleFeatureReport();
 
     const applied = await this.readButtonRemap();
