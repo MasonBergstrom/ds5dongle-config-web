@@ -156,6 +156,7 @@ export const en = {
       hz250: "250 Hz",
       hz500: "500 Hz",
       realTime: "Real-time",
+      hz1000: "1000 Hz",
     },
     audioDeviceSelectOptions: {
       auto: "Auto",
@@ -185,7 +186,8 @@ export const en = {
       micSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       speakerSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       enableWake: "Enable USB wake.\nNote: after enabling, USB will stay continuously connected.",
-      pollingRateMode: "Real-time mode may cause gyro jitter. 500 Hz is recommended.",
+      pollingRateMode:
+        "250 Hz and 500 Hz provide fixed-rate reports but discard newer Bluetooth samples between USB polls. Real-time forwards each new sample with the lowest latency but uneven cadence may cause gyro jitter. 1000 Hz keeps a fixed 1 ms cadence by repeating the latest sample when needed.",
       controllerMode: "TODO: Fill in the controller mode description here.",
       enableUsbSn: "TODO: Fill in the USB serial number description here.",
       enableKeyboard:
@@ -291,7 +293,7 @@ export const en = {
     speakerGain: "Speaker gain must be between 0 and 7",
     triggerReduce: "Trigger feedback reduction must be between 0 and 10",
     inactiveTime: "Inactive time must be between 0 and 60 minutes",
-    pollingRateMode: "Polling rate mode must be 0, 1, or 2",
+    pollingRateMode: "Polling rate mode must be 0, 1, 2, or 3",
     audioBufferLength: "Audio buffer length must be between 16 and 128",
     controllerMode: "Controller mode must be DS5, DSE, or Auto",
     micSelect: "Microphone must be Auto, Built-in, Headphone, or Disabled",

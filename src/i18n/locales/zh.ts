@@ -155,6 +155,7 @@ export const zh = {
       hz250: "250 Hz",
       hz500: "500 Hz",
       realTime: "实时",
+      hz1000: "1000 Hz",
     },
     audioDeviceSelectOptions: {
       auto: "自动",
@@ -181,7 +182,8 @@ export const zh = {
       micSelect: "0: 自动\n1: 内置\n2: 耳机\n3: 禁用",
       speakerSelect: "0: 自动\n1: 内置\n2: 耳机\n3: 禁用",
       enableWake: "开启 USB 唤醒。\n注意：开启后 USB 会一直保持常连状态",
-      pollingRateMode: "开启实时模式可能会有陀螺仪抽搐的问题。推荐 500Hz",
+      pollingRateMode:
+        "250 Hz 和 500 Hz 以固定频率发送报告，但会丢弃两次 USB 轮询之间收到的较新蓝牙样本。实时模式以最低延迟转发每个新样本，但不均匀的节奏可能导致陀螺仪抖动。1000 Hz 模式在需要时重复最新样本，以保持固定的 1 ms 节奏。",
       controllerMode: "TODO: 在这里填写控制器模式说明。",
       enableUsbSn: "TODO: 在这里填写 USB 序列号说明。",
       enableKeyboard: "暴露快捷键所需的 USB 键盘与多媒体控制接口。修改后需要重连 USB。",
@@ -284,7 +286,7 @@ export const zh = {
     speakerGain: "扬声器增益必须在 0 到 7 之间",
     triggerReduce: "扳机反馈削减必须在 0 到 10 之间",
     inactiveTime: "闲置时间必须在 0 到 60 分钟之间",
-    pollingRateMode: "轮询率模式必须是 0、1 或 2",
+    pollingRateMode: "轮询率模式必须是 0、1、2 或 3",
     audioBufferLength: "音频缓冲长度必须在 16 到 128 之间",
     controllerMode: "控制器模式必须是 DS5、DSE 或自动",
     micSelect: "麦克风必须是自动、内置、耳机或禁用",

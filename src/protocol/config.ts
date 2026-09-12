@@ -2,7 +2,7 @@ export const CONFIG_BODY_VERSION = 5;
 export const CONFIG_BODY_SIZE = 22;
 export const FEATURE_REPORT_PAYLOAD_SIZE = 63;
 
-export type PollingRateMode = 0 | 1 | 2;
+export type PollingRateMode = 0 | 1 | 2 | 3;
 export type ControllerMode = 0 | 1 | 2;
 export type AudioDeviceSelect = 0 | 1 | 2 | 3;
 export type StatusGpioMode = 0 | 1;
@@ -69,6 +69,7 @@ export const POLLING_RATE_OPTIONS: Array<{
 }> = [
   { value: 0, label: "250 Hz" },
   { value: 1, label: "500 Hz" },
+  { value: 3, label: "1000 Hz smoothed" },
   { value: 2, label: "Real-Time" },
 ];
 
@@ -176,7 +177,7 @@ export function validateConfig(config: ConfigBody): ConfigValidationIssue[] {
     issues.push({ field: "inactiveTime" });
   }
 
-  if (!Number.isInteger(config.pollingRateMode) || config.pollingRateMode < 0 || config.pollingRateMode > 2) {
+  if (!Number.isInteger(config.pollingRateMode) || config.pollingRateMode < 0 || config.pollingRateMode > 3) {
     issues.push({ field: "pollingRateMode" });
   }
 
@@ -223,7 +224,7 @@ export function normalizeConfig(config: ConfigBody): ConfigBody {
     speakerGain: clampInteger(config.speakerGain, 0, 7),
     inactiveTime: clampInteger(config.inactiveTime, 0, 60),
     disablePicoLed: Boolean(config.disablePicoLed),
-    pollingRateMode: clampInteger(config.pollingRateMode, 0, 2) as PollingRateMode,
+    pollingRateMode: clampInteger(config.pollingRateMode, 0, 3) as PollingRateMode,
     audioBufferLength: clampInteger(config.audioBufferLength, 16, 128),
     controllerMode: clampInteger(config.controllerMode, 0, 2) as ControllerMode,
     enableUsbSn: Boolean(config.enableUsbSn),

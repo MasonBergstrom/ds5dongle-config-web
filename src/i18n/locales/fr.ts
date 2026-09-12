@@ -158,6 +158,7 @@ export const fr = {
       hz250: "250 Hz",
       hz500: "500 Hz",
       realTime: "Temps réel",
+      hz1000: "1000 Hz",
     },
     audioDeviceSelectOptions: {
       auto: "Auto",
@@ -188,7 +189,8 @@ export const fr = {
       micSelect: "0 : Auto\n1 : Intégré\n2 : Casque\n3 : Désactivé",
       speakerSelect: "0 : Auto\n1 : Intégré\n2 : Casque\n3 : Désactivé",
       enableWake: "Activer le réveil USB.\nRemarque : après activation, l'USB restera connecté en continu.",
-      pollingRateMode: "Le mode temps réel peut provoquer des saccades du gyroscope. 500 Hz est recommandé.",
+      pollingRateMode:
+        "Les modes 250 Hz et 500 Hz produisent des rapports à fréquence fixe, mais écartent les nouveaux échantillons Bluetooth entre les interrogations USB. Le temps réel transmet chaque nouvel échantillon avec la latence la plus faible, mais sa cadence irrégulière peut perturber le gyroscope. Le mode 1000 Hz maintient une cadence fixe de 1 ms en répétant le dernier échantillon si nécessaire.",
       controllerMode: "TODO : ajouter ici la description du mode de manette.",
       enableUsbSn: "TODO : ajouter ici la description du numéro de série USB.",
       enableKeyboard:
@@ -295,7 +297,7 @@ export const fr = {
     speakerGain: "Le gain du haut-parleur doit être compris entre 0 et 7",
     triggerReduce: "La réduction du retour des gâchettes doit être comprise entre 0 et 10",
     inactiveTime: "Le temps d'inactivité doit être compris entre 0 et 60 minutes",
-    pollingRateMode: "Le mode de taux d'interrogation doit être 0, 1 ou 2",
+    pollingRateMode: "Le mode de taux d'interrogation doit être 0, 1, 2 ou 3",
     audioBufferLength: "La longueur du tampon audio doit être comprise entre 16 et 128",
     controllerMode: "Le mode de manette doit être DS5, DSE ou Auto",
     micSelect: "Le microphone doit être Auto, Intégré, Casque ou Désactivé",
