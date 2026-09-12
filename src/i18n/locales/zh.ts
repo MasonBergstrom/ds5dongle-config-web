@@ -135,6 +135,7 @@ export const zh = {
     micSelect: "麦克风",
     speakerSelect: "扬声器 / 耳机",
     enableWake: "按 PS 键唤醒主机",
+    enableIdleUsb: "手柄关机时隐藏虚拟手柄",
     pollingRateMode: "轮询率模式",
     audioBufferLength: "音频缓冲长度",
     lockVolume: "锁定音量",
@@ -181,6 +182,8 @@ export const zh = {
       micSelect: "0: 自动\n1: 内置\n2: 耳机\n3: 禁用",
       speakerSelect: "0: 自动\n1: 内置\n2: 耳机\n3: 禁用",
       enableWake: "开启 USB 唤醒。\n注意：开启后 USB 会一直保持常连状态",
+      enableIdleUsb:
+        "实验性功能；需要先开启“按 PS 键唤醒主机”。手柄断开后，接收器会短暂重新枚举为独立的仅唤醒 USB 设备；虚拟 DualSense 和音频设备会消失，并且在手柄重新连接前本页面无法连接。每次手柄连接或断开都会造成约 250 ms 的 USB 设备替换，并可能触发应用通知；无法正确处理设备移除的软件可能需要重启。Windows 首次使用时还会安装新的唤醒 HID 设备。如遇 USB、音频、游戏或唤醒不稳定，请保持关闭。",
       pollingRateMode: "开启实时模式可能会有陀螺仪抽搐的问题。推荐 500Hz",
       controllerMode: "TODO: 在这里填写控制器模式说明。",
       enableUsbSn: "TODO: 在这里填写 USB 序列号说明。",

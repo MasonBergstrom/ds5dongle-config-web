@@ -136,6 +136,7 @@ export const en = {
     micSelect: "Microphone",
     speakerSelect: "Speaker / headset",
     enableWake: "Wake host on PS press",
+    enableIdleUsb: "Hide controller while powered off",
     pollingRateMode: "Polling rate mode",
     audioBufferLength: "Audio buffer length",
     lockVolume: "Lock volume",
@@ -185,6 +186,8 @@ export const en = {
       micSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       speakerSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       enableWake: "Enable USB wake.\nNote: after enabling, USB will stay continuously connected.",
+      enableIdleUsb:
+        "Experimental; requires Wake host on PS press. When the controller disconnects, the dongle briefly re-enumerates as a separate wake-only USB device. The virtual DualSense and its audio devices disappear, and this portal cannot connect until the controller returns. Each controller connect/disconnect causes about a 250 ms USB device replacement and may show application notifications; software that handles device removal poorly may need to be restarted. Windows also installs the wake-only HID device the first time. Leave this disabled if you experience USB, audio, game, or wake instability.",
       pollingRateMode: "Real-time mode may cause gyro jitter. 500 Hz is recommended.",
       controllerMode: "TODO: Fill in the controller mode description here.",
       enableUsbSn: "TODO: Fill in the USB serial number description here.",

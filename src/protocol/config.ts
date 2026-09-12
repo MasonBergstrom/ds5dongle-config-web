@@ -1,5 +1,5 @@
 export const CONFIG_BODY_VERSION = 5;
-export const CONFIG_BODY_SIZE = 22;
+export const CONFIG_BODY_SIZE = 23;
 export const FEATURE_REPORT_PAYLOAD_SIZE = 63;
 
 export type PollingRateMode = 0 | 1 | 2;
@@ -36,6 +36,7 @@ export interface ConfigBody {
   lockVolume: boolean;
   statusGpioPin: number;
   statusGpioMode: StatusGpioMode;
+  enableIdleUsb: boolean;
 }
 
 export interface ConfigValidationIssue {
@@ -61,6 +62,7 @@ export const DEFAULT_CONFIG: ConfigBody = {
   lockVolume: false,
   statusGpioPin: STATUS_GPIO_DISABLED,
   statusGpioMode: 0,
+  enableIdleUsb: false,
 };
 
 export const POLLING_RATE_OPTIONS: Array<{
@@ -150,6 +152,7 @@ export function encodeConfigBody(config: ConfigBody): Uint8Array<ArrayBuffer> {
   view.setUint8(19, config.lockVolume ? 1 : 0);
   view.setUint8(20, config.statusGpioPin);
   view.setUint8(21, config.statusGpioMode);
+  view.setUint8(22, config.enableIdleUsb ? 1 : 0);
   return bytes;
 }
 
@@ -237,6 +240,7 @@ export function normalizeConfig(config: ConfigBody): ConfigBody {
       ? config.statusGpioPin
       : STATUS_GPIO_DISABLED,
     statusGpioMode: clampInteger(config.statusGpioMode, 0, 1) as StatusGpioMode,
+    enableIdleUsb: Boolean(config.enableIdleUsb),
   };
 }
 
@@ -267,7 +271,8 @@ export function configsEqual(left: ConfigBody | null, right: ConfigBody | null):
     left.triggerReduce === right.triggerReduce &&
     left.lockVolume === right.lockVolume &&
     left.statusGpioPin === right.statusGpioPin &&
-    left.statusGpioMode === right.statusGpioMode
+    left.statusGpioMode === right.statusGpioMode &&
+    left.enableIdleUsb === right.enableIdleUsb
   );
 }
 
@@ -320,6 +325,7 @@ function decodeAt(bytes: Uint8Array, offset: number): DecodedConfigCandidate | n
       lockVolume: view.getUint8(19) === 1,
       statusGpioPin: view.getUint8(20),
       statusGpioMode: view.getUint8(21) as StatusGpioMode,
+      enableIdleUsb: view.getUint8(22) === 1,
     },
   };
 }

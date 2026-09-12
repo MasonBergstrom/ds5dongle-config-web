@@ -138,6 +138,7 @@ export const fr = {
     micSelect: "Microphone",
     speakerSelect: "Haut-parleur / casque",
     enableWake: "Réveiller l'hôte avec PS",
+    enableIdleUsb: "Masquer la manette lorsqu'elle est éteinte",
     pollingRateMode: "Mode de taux d'interrogation",
     audioBufferLength: "Longueur du tampon audio",
     lockVolume: "Verrouiller le volume",
@@ -188,6 +189,8 @@ export const fr = {
       micSelect: "0 : Auto\n1 : Intégré\n2 : Casque\n3 : Désactivé",
       speakerSelect: "0 : Auto\n1 : Intégré\n2 : Casque\n3 : Désactivé",
       enableWake: "Activer le réveil USB.\nRemarque : après activation, l'USB restera connecté en continu.",
+      enableIdleUsb:
+        "Expérimental ; nécessite le réveil de l'hôte avec PS. Lorsque la manette se déconnecte, le dongle se réénumère brièvement comme un périphérique USB distinct réservé au réveil. La DualSense virtuelle et ses périphériques audio disparaissent, et ce portail ne peut plus se connecter jusqu'au retour de la manette. Chaque connexion ou déconnexion remplace le périphérique USB pendant environ 250 ms et peut afficher des notifications ; les logiciels qui gèrent mal la disparition d'un périphérique peuvent devoir être redémarrés. Windows installe également le périphérique HID de réveil lors de la première utilisation. Laissez cette option désactivée en cas d'instabilité USB, audio, de jeu ou de réveil.",
       pollingRateMode: "Le mode temps réel peut provoquer des saccades du gyroscope. 500 Hz est recommandé.",
       controllerMode: "TODO : ajouter ici la description du mode de manette.",
       enableUsbSn: "TODO : ajouter ici la description du numéro de série USB.",

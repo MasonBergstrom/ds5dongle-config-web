@@ -201,6 +201,13 @@ export function ConfigPanel({ bridge }: ConfigPanelProps) {
                 disabled={controlsDisabled}
                 onChange={(value) => bridge.setDraftField("enableWake", value)}
               />
+              <ToggleControl
+                label={t("config.enableIdleUsb")}
+                value={bridge.draft.enableIdleUsb}
+                helpContent={t("config.help.enableIdleUsb")}
+                disabled={controlsDisabled || !bridge.draft.enableWake}
+                onChange={(value) => bridge.setDraftField("enableIdleUsb", value)}
+              />
               <AudioDeviceSelectControl
                 label={t("config.micSelect")}
                 value={bridge.draft.micSelect}
