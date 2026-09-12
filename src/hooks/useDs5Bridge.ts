@@ -45,7 +45,7 @@ type Operation =
 type SaveState = "idle" | "dirty" | "applied" | "saved";
 type UsbEffectiveConfig = Pick<
   ConfigBody,
-  "pollingRateMode" | "controllerMode" | "enableUsbSn" | "enableKeyboard" | "enableWake"
+  "pollingRateMode" | "controllerMode" | "enableUsbSn" | "enableKeyboard" | "enableWake" | "enableIdleUsb"
 >;
 
 const SIGNAL_STRENGTH_REFRESH_INTERVAL_MS = 5_000;
@@ -680,6 +680,7 @@ function pickUsbEffectiveConfig(config: ConfigBody): UsbEffectiveConfig {
     enableUsbSn: config.enableUsbSn,
     enableKeyboard: config.enableKeyboard,
     enableWake: config.enableWake,
+    enableIdleUsb: config.enableIdleUsb,
   };
 }
 
@@ -693,7 +694,8 @@ function usbEffectiveConfigChanged(current: UsbEffectiveConfig | null, next: Con
     current.controllerMode !== next.controllerMode ||
     current.enableUsbSn !== next.enableUsbSn ||
     current.enableKeyboard !== next.enableKeyboard ||
-    current.enableWake !== next.enableWake
+    current.enableWake !== next.enableWake ||
+    current.enableIdleUsb !== next.enableIdleUsb
   );
 }
 

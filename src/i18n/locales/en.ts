@@ -136,6 +136,7 @@ export const en = {
     micSelect: "Microphone",
     speakerSelect: "Speaker / headset",
     enableWake: "Wake host on PS press",
+    enableIdleUsb: "Hide controller while powered off",
     pollingRateMode: "Polling rate mode",
     audioBufferLength: "Audio buffer length",
     lockVolume: "Lock volume",
@@ -186,6 +187,8 @@ export const en = {
       micSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       speakerSelect: "0: Auto\n1: Built-in\n2: Headphone\n3: Disabled",
       enableWake: "Enable USB wake.\nNote: after enabling, USB will stay continuously connected.",
+      enableIdleUsb:
+        "Experimental; requires Wake host on PS press. When the controller disconnects, the dongle briefly re-enumerates as a separate wake-only USB device. The virtual DualSense and its audio devices disappear, and this portal cannot connect until the controller returns. Each controller connect/disconnect causes about a 250 ms USB device replacement and may show application notifications; software that handles device removal poorly may need to be restarted. Windows also installs the wake-only HID device the first time. Leave this disabled if you experience USB, audio, game, or wake instability.",
       pollingRateMode:
         "250 Hz and 500 Hz provide fixed-rate reports but discard newer Bluetooth samples between USB polls. Real-time forwards each new sample with the lowest latency but uneven cadence may cause gyro jitter. 1000 Hz keeps a fixed 1 ms cadence by repeating the latest sample when needed.",
       controllerMode: "TODO: Fill in the controller mode description here.",
