@@ -21,6 +21,8 @@ export const SONY_VENDOR_ID = 0x054c;
 export const DUALSENSE_PRODUCT_ID = 0x0ce6;
 export const DUALSENSE_EDGE_PRODUCT_ID = 0x0df2;
 export const SUPPORTED_PRODUCT_IDS = [DUALSENSE_PRODUCT_ID, DUALSENSE_EDGE_PRODUCT_ID] as const;
+export const IDLE_VENDOR_ID = 0x2e8a;
+export const IDLE_PRODUCT_ID = 0x0de0;
 export const NO_DEVICE_SELECTED_ERROR = "noDeviceSelected";
 export const WEBHID_UNAVAILABLE_ERROR = "webHidUnavailable";
 
@@ -28,6 +30,8 @@ export type ControllerModel = "dualsense" | "dualsense-edge";
 
 const GENERIC_DESKTOP_USAGE_PAGE = 0x01;
 const GAMEPAD_USAGE = 0x05;
+const VENDOR_USAGE_PAGE = 0xff00;
+const CONFIG_USAGE = 0x01;
 const REPORT_SET_CONFIG = 0xf6;
 const REPORT_GET_CONFIG = 0xf7;
 const REPORT_GET_FIRMWARE_VERSION = 0xf8;
@@ -51,22 +55,35 @@ export class Ds5BridgeHidClient {
   constructor(public readonly device: HIDDevice) {}
 
   static isSupportedDevice(device: HIDDevice): boolean {
-    return (
+    const isFullIdentity =
       device.vendorId === SONY_VENDOR_ID &&
       SUPPORTED_PRODUCT_IDS.includes(device.productId as 0x0ce6 | 0x0df2) &&
-      device.collections.some(isGamepadCollection)
-    );
+      device.collections.some(isGamepadCollection);
+    const isIdleIdentity =
+      device.vendorId === IDLE_VENDOR_ID &&
+      device.productId === IDLE_PRODUCT_ID &&
+      device.collections.some(isConfigCollection);
+
+    return isFullIdentity || isIdleIdentity;
   }
 
   static async requestDevice(): Promise<Ds5BridgeHidClient> {
     const hid = getHid();
     const devices = await hid.requestDevice({
-      filters: SUPPORTED_PRODUCT_IDS.map((productId) => ({
-        vendorId: SONY_VENDOR_ID,
-        productId,
-        usagePage: GENERIC_DESKTOP_USAGE_PAGE,
-        usage: GAMEPAD_USAGE,
-      })),
+      filters: [
+        ...SUPPORTED_PRODUCT_IDS.map((productId) => ({
+          vendorId: SONY_VENDOR_ID,
+          productId,
+          usagePage: GENERIC_DESKTOP_USAGE_PAGE,
+          usage: GAMEPAD_USAGE,
+        })),
+        {
+          vendorId: IDLE_VENDOR_ID,
+          productId: IDLE_PRODUCT_ID,
+          usagePage: VENDOR_USAGE_PAGE,
+          usage: CONFIG_USAGE,
+        },
+      ],
     });
 
     const device = devices.find(Ds5BridgeHidClient.isSupportedDevice);
@@ -185,12 +202,13 @@ export function getDeviceLabel(device: HIDDevice | null): string {
     return "No device";
   }
 
+  const vendorId = device.vendorId.toString(16).padStart(4, "0").toUpperCase();
   const productId = device.productId.toString(16).padStart(4, "0").toUpperCase();
-  return `${device.productName || "DS5 Bridge"} · 054C:${productId}`;
+  return `${device.productName || "DS5 Bridge"} · ${vendorId}:${productId}`;
 }
 
 export function getControllerModel(device: HIDDevice | null): ControllerModel | null {
-  if (!device) {
+  if (!device || device.vendorId !== SONY_VENDOR_ID) {
     return null;
   }
 
@@ -207,6 +225,10 @@ function getHid(): HID {
 
 function isGamepadCollection(collection: HIDCollectionInfo): boolean {
   return collection.usagePage === GENERIC_DESKTOP_USAGE_PAGE && collection.usage === GAMEPAD_USAGE;
+}
+
+function isConfigCollection(collection: HIDCollectionInfo): boolean {
+  return collection.usagePage === VENDOR_USAGE_PAGE && collection.usage === CONFIG_USAGE;
 }
 
 function commandReport(command: number): Uint8Array<ArrayBuffer> {
