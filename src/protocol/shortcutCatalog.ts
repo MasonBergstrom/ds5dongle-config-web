@@ -66,6 +66,7 @@ export const CONSUMER_OPTIONS: readonly ShortcutOption[] = [
   { value: 0x00b5, label: "Next Track" },
   { value: 0x00b6, label: "Previous Track" },
   { value: 0x00b7, label: "Stop" },
+  // Stored as the Consumer Sleep marker; firmware emits Generic Desktop System Sleep.
   { value: 0x0032, label: "Sleep" },
   { value: 0x006f, label: "Brightness Up" },
   { value: 0x0070, label: "Brightness Down" },
