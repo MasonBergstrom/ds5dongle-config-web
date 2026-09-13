@@ -635,7 +635,15 @@ export function useDs5Bridge(): UseDs5BridgeResult {
     }
 
     const handleDisconnect = (event: HIDConnectionEvent) => {
-      if (client?.device === event.device) {
+      const activeDevice = clientRef.current?.device;
+      const activeInterfaceDisconnected =
+        activeDevice === event.device ||
+        (Boolean(activeDevice) &&
+          Ds5BridgeHidClient.isSupportedDevice(event.device) &&
+          activeDevice?.vendorId === event.device.vendorId &&
+          activeDevice.productId === event.device.productId);
+
+      if (activeInterfaceDisconnected) {
         const reconnecting = reconnectPendingRef.current;
         if (!reconnecting) {
           // Controller connect/disconnect swaps the Full and Idle USB
@@ -663,7 +671,13 @@ export function useDs5Bridge(): UseDs5BridgeResult {
     };
 
     const handleConnect = (event: HIDConnectionEvent) => {
-      void reconnectAuthorized(event.device);
+      if (Ds5BridgeHidClient.isSupportedDevice(event.device) && !clientRef.current?.device.opened) {
+        // Recover even if Chromium represented the disconnect with a different
+        // HIDDevice object or omitted the matching interface event.
+        reconnectPendingRef.current = true;
+        setOperation("reconnecting");
+        void reconnectAuthorized(event.device);
+      }
       void refreshAuthorizedDevices();
     };
 
@@ -674,7 +688,7 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       navigator.hid?.removeEventListener("disconnect", handleDisconnect);
       navigator.hid?.removeEventListener("connect", handleConnect);
     };
-  }, [client, reconnectAuthorized, refreshAuthorizedDevices, waitForReplacementIdentity]);
+  }, [reconnectAuthorized, refreshAuthorizedDevices, waitForReplacementIdentity]);
 
   useEffect(() => () => clearReconnectTimeout(), [clearReconnectTimeout]);
 
