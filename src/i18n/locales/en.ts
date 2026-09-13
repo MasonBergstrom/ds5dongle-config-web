@@ -311,6 +311,8 @@ export const en = {
     noDeviceSelected: "No DS5 Bridge device was selected",
     unexpectedWebHid: "Unexpected WebHID error",
     disconnected: "Device disconnected",
+    reconnectAuthorizationRequired:
+      "The replacement USB identity needs authorization. Click Connect and select DS5Dongle.",
     invalidRemap: "Device returned an invalid remap value at index {{index}}: {{value}}",
     invalidRemapLength: "Button remap has {{count}} entries; expected {{expected}}",
     invalidShortcut: "Shortcut slot {{slot}} is invalid",

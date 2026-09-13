@@ -317,6 +317,8 @@ export const fr = {
     noDeviceSelected: "Aucun appareil DS5 Bridge sélectionné",
     unexpectedWebHid: "Erreur WebHID inattendue",
     disconnected: "Appareil déconnecté",
+    reconnectAuthorizationRequired:
+      "La nouvelle identité USB doit être autorisée. Cliquez sur Connecter et sélectionnez DS5Dongle.",
     invalidRemap: "Valeur de remappage invalide à l'index {{index}} : {{value}}",
     invalidRemapLength: "Le remappage contient {{count}} entrées ; {{expected}} attendues",
     invalidShortcut: "L'emplacement de raccourci {{slot}} est invalide",

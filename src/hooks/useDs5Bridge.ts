@@ -49,6 +49,7 @@ type UsbEffectiveConfig = Pick<
 >;
 
 const SIGNAL_STRENGTH_REFRESH_INTERVAL_MS = 5_000;
+const USB_RECONNECT_TIMEOUT_MS = 4_000;
 
 /** Receives the physical controls held down, as source ids matching BUTTON_NAMES. */
 export type ControllerButtonListener = (pressed: readonly number[]) => void;
@@ -122,6 +123,8 @@ export function useDs5Bridge(): UseDs5BridgeResult {
   const usbEffectiveConfigRef = useRef<UsbEffectiveConfig | null>(null);
   const applyingRef = useRef(false);
   const applyQueuedRef = useRef(false);
+  const reconnectPendingRef = useRef(false);
+  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const issues = useMemo(() => validateConfig(draft), [draft]);
   const isConnected = Boolean(client?.device.opened);
@@ -162,6 +165,13 @@ export function useDs5Bridge(): UseDs5BridgeResult {
 
     setAuthorizedDevices(await Ds5BridgeHidClient.authorizedDevices());
   }, [supported]);
+
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current !== null) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
   const readConfigWithClient = useCallback(async (nextClient: Ds5BridgeHidClient, syncUsbEffectiveConfig = false) => {
     setOperation("reading");
@@ -253,6 +263,25 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       void readSignalStrengthWithClient(nextClient);
     },
     [readButtonSettingsWithClient, readConfigWithClient, readFirmwareVersionWithClient, readSignalStrengthWithClient, t],
+  );
+
+  const reconnectAuthorized = useCallback(
+    async (device: HIDDevice) => {
+      if (!reconnectPendingRef.current || !Ds5BridgeHidClient.isSupportedDevice(device)) {
+        return;
+      }
+
+      reconnectPendingRef.current = false;
+      clearReconnectTimeout();
+      try {
+        await attachClient(new Ds5BridgeHidClient(device));
+        await refreshAuthorizedDevices();
+      } catch (cause) {
+        setError(errorMessage(cause, t));
+        setOperation(null);
+      }
+    },
+    [attachClient, clearReconnectTimeout, refreshAuthorizedDevices, t],
   );
 
   const connect = useCallback(async () => {
@@ -375,17 +404,46 @@ export function useDs5Bridge(): UseDs5BridgeResult {
     }
 
     setOperation("reconnecting");
+    reconnectPendingRef.current = true;
+    clearReconnectTimeout();
     try {
       await client.reconnectUsb();
       usbEffectiveConfigRef.current = pickUsbEffectiveConfig(configRef.current ?? draftRef.current);
       setNeedsUsbReconnect(false);
       setError(null);
+
+      if (!reconnectPendingRef.current) {
+        return;
+      }
+
+      // A previously authorized identity produces a WebHID connect event and
+      // reconnects immediately. A new VID/PID cannot open its chooser here:
+      // requestDevice() requires a fresh user gesture, so fall back to Connect.
+      reconnectTimeoutRef.current = window.setTimeout(async () => {
+        if (!reconnectPendingRef.current) {
+          return;
+        }
+
+        const devices = await Ds5BridgeHidClient.authorizedDevices();
+        const device = devices[0];
+        if (device) {
+          await reconnectAuthorized(device);
+          return;
+        }
+
+        reconnectPendingRef.current = false;
+        reconnectTimeoutRef.current = null;
+        setOperation(null);
+        setError(t("errors.reconnectAuthorizationRequired"));
+        await refreshAuthorizedDevices();
+      }, USB_RECONNECT_TIMEOUT_MS);
     } catch (cause) {
+      reconnectPendingRef.current = false;
+      clearReconnectTimeout();
       setError(errorMessage(cause, t));
-    } finally {
       setOperation(null);
     }
-  }, [client, t]);
+  }, [clearReconnectTimeout, client, reconnectAuthorized, refreshAuthorizedDevices, t]);
 
   const setDraftField = useCallback(
     <Key extends keyof ConfigBody>(field: Key, value: ConfigBody[Key]) => {
@@ -571,6 +629,7 @@ export function useDs5Bridge(): UseDs5BridgeResult {
 
     const handleDisconnect = (event: HIDConnectionEvent) => {
       if (client?.device === event.device) {
+        const reconnecting = reconnectPendingRef.current;
         clientRef.current = null;
         configRef.current = null;
         draftRef.current = DEFAULT_CONFIG;
@@ -587,12 +646,16 @@ export function useDs5Bridge(): UseDs5BridgeResult {
         setShortcuts(createDefaultShortcutSlots());
         setNeedsUsbReconnect(false);
         setSaveState("idle");
-        setError(t("errors.disconnected"));
+        if (!reconnecting) {
+          setOperation(null);
+          setError(t("errors.disconnected"));
+        }
       }
       void refreshAuthorizedDevices();
     };
 
-    const handleConnect = () => {
+    const handleConnect = (event: HIDConnectionEvent) => {
+      void reconnectAuthorized(event.device);
       void refreshAuthorizedDevices();
     };
 
@@ -603,7 +666,9 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       navigator.hid?.removeEventListener("disconnect", handleDisconnect);
       navigator.hid?.removeEventListener("connect", handleConnect);
     };
-  }, [client, refreshAuthorizedDevices, t]);
+  }, [client, reconnectAuthorized, refreshAuthorizedDevices, t]);
+
+  useEffect(() => () => clearReconnectTimeout(), [clearReconnectTimeout]);
 
   return {
     supported,

@@ -304,6 +304,7 @@ export const zh = {
     noDeviceSelected: "未选择 DS5 Bridge 设备",
     unexpectedWebHid: "未知 WebHID 错误",
     disconnected: "设备已断开连接",
+    reconnectAuthorizationRequired: "新的 USB 设备身份需要授权。请点击“连接”并选择 DS5Dongle。",
     invalidRemap: "设备在索引 {{index}} 返回了无效映射值：{{value}}",
     invalidRemapLength: "按键映射包含 {{count}} 项，预期为 {{expected}} 项",
     invalidShortcut: "快捷键槽位 {{slot}} 无效",
