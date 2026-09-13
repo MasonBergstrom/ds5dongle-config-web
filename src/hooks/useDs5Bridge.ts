@@ -284,7 +284,39 @@ export function useDs5Bridge(): UseDs5BridgeResult {
     [attachClient, clearReconnectTimeout, refreshAuthorizedDevices, t],
   );
 
+  const waitForReplacementIdentity = useCallback(() => {
+    reconnectPendingRef.current = true;
+    clearReconnectTimeout();
+    setOperation("reconnecting");
+    setError(null);
+
+    reconnectTimeoutRef.current = window.setTimeout(async () => {
+      if (!reconnectPendingRef.current) {
+        return;
+      }
+
+      try {
+        const devices = await Ds5BridgeHidClient.authorizedDevices();
+        const device = devices[0];
+        if (device) {
+          await reconnectAuthorized(device);
+          return;
+        }
+      } catch {
+        // Fall through to the one-click authorization guidance below.
+      }
+
+      reconnectPendingRef.current = false;
+      reconnectTimeoutRef.current = null;
+      setOperation(null);
+      setError(t("errors.reconnectAuthorizationRequired"));
+      void refreshAuthorizedDevices();
+    }, USB_RECONNECT_TIMEOUT_MS);
+  }, [clearReconnectTimeout, reconnectAuthorized, refreshAuthorizedDevices, t]);
+
   const connect = useCallback(async () => {
+    reconnectPendingRef.current = false;
+    clearReconnectTimeout();
     try {
       await attachClient(await Ds5BridgeHidClient.requestDevice());
       await refreshAuthorizedDevices();
@@ -292,10 +324,12 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       setError(errorMessage(cause, t));
       setOperation(null);
     }
-  }, [attachClient, refreshAuthorizedDevices, t]);
+  }, [attachClient, clearReconnectTimeout, refreshAuthorizedDevices, t]);
 
   const connectAuthorized = useCallback(
     async (device: HIDDevice) => {
+      reconnectPendingRef.current = false;
+      clearReconnectTimeout();
       try {
         await attachClient(new Ds5BridgeHidClient(device));
       } catch (cause) {
@@ -303,7 +337,7 @@ export function useDs5Bridge(): UseDs5BridgeResult {
         setOperation(null);
       }
     },
-    [attachClient, t],
+    [attachClient, clearReconnectTimeout, t],
   );
 
   const readConfig = useCallback(async () => {
@@ -403,47 +437,20 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       return;
     }
 
-    setOperation("reconnecting");
-    reconnectPendingRef.current = true;
-    clearReconnectTimeout();
+    waitForReplacementIdentity();
     try {
       await client.reconnectUsb();
       usbEffectiveConfigRef.current = pickUsbEffectiveConfig(configRef.current ?? draftRef.current);
       setNeedsUsbReconnect(false);
       setError(null);
 
-      if (!reconnectPendingRef.current) {
-        return;
-      }
-
-      // A previously authorized identity produces a WebHID connect event and
-      // reconnects immediately. A new VID/PID cannot open its chooser here:
-      // requestDevice() requires a fresh user gesture, so fall back to Connect.
-      reconnectTimeoutRef.current = window.setTimeout(async () => {
-        if (!reconnectPendingRef.current) {
-          return;
-        }
-
-        const devices = await Ds5BridgeHidClient.authorizedDevices();
-        const device = devices[0];
-        if (device) {
-          await reconnectAuthorized(device);
-          return;
-        }
-
-        reconnectPendingRef.current = false;
-        reconnectTimeoutRef.current = null;
-        setOperation(null);
-        setError(t("errors.reconnectAuthorizationRequired"));
-        await refreshAuthorizedDevices();
-      }, USB_RECONNECT_TIMEOUT_MS);
     } catch (cause) {
       reconnectPendingRef.current = false;
       clearReconnectTimeout();
       setError(errorMessage(cause, t));
       setOperation(null);
     }
-  }, [clearReconnectTimeout, client, reconnectAuthorized, refreshAuthorizedDevices, t]);
+  }, [clearReconnectTimeout, client, t, waitForReplacementIdentity]);
 
   const setDraftField = useCallback(
     <Key extends keyof ConfigBody>(field: Key, value: ConfigBody[Key]) => {
@@ -630,6 +637,11 @@ export function useDs5Bridge(): UseDs5BridgeResult {
     const handleDisconnect = (event: HIDConnectionEvent) => {
       if (client?.device === event.device) {
         const reconnecting = reconnectPendingRef.current;
+        if (!reconnecting) {
+          // Controller connect/disconnect swaps the Full and Idle USB
+          // identities without going through the portal's Reconnect button.
+          waitForReplacementIdentity();
+        }
         clientRef.current = null;
         configRef.current = null;
         draftRef.current = DEFAULT_CONFIG;
@@ -646,10 +658,6 @@ export function useDs5Bridge(): UseDs5BridgeResult {
         setShortcuts(createDefaultShortcutSlots());
         setNeedsUsbReconnect(false);
         setSaveState("idle");
-        if (!reconnecting) {
-          setOperation(null);
-          setError(t("errors.disconnected"));
-        }
       }
       void refreshAuthorizedDevices();
     };
@@ -666,7 +674,7 @@ export function useDs5Bridge(): UseDs5BridgeResult {
       navigator.hid?.removeEventListener("disconnect", handleDisconnect);
       navigator.hid?.removeEventListener("connect", handleConnect);
     };
-  }, [client, reconnectAuthorized, refreshAuthorizedDevices, t]);
+  }, [client, reconnectAuthorized, refreshAuthorizedDevices, waitForReplacementIdentity]);
 
   useEffect(() => () => clearReconnectTimeout(), [clearReconnectTimeout]);
 
